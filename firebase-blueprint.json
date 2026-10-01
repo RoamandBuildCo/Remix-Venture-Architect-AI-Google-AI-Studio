@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "AppraisalItem": {
+      "title": "AppraisalItem",
+      "description": "Forensic inventory appraisal dossier for light electric vehicles, collectibles, and high-value gear.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "assetName": { "type": "string", "maxLength": 256 },
+        "category": { "type": "string", "maxLength": 64 },
+        "confidenceRating": { "type": "string", "maxLength": 64 },
+        "confidenceExplanation": { "type": "string", "maxLength": 1024 },
+        "missingDataAlert": { "type": "string", "maxLength": 1024 },
+        "safetyAndScamWarning": { "type": "string", "maxLength": 1024 },
+        "singleImmediateAction": { "type": "string", "maxLength": 1024 },
+        "status": { "type": "string", "maxLength": 64 },
+        "dateLogged": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "ownerId", "assetName", "category", "confidenceRating", "status"]
+    },
+    "ExecutionTask": {
+      "title": "ExecutionTask",
+      "description": "Startup execution roadmap step or garage priority task.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "level": { "type": "string", "maxLength": 64 },
+        "levelName": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "targetMetric": { "type": "string", "maxLength": 256 },
+        "completed": { "type": "boolean" },
+        "completionDate": { "type": "string", "maxLength": 64 },
+        "notes": { "type": "string", "maxLength": 2048 }
+      },
+      "required": ["id", "ownerId", "title", "completed"]
+    },
+    "SupplementaryRequest": {
+      "title": "SupplementaryRequest",
+      "description": "Template-driven forensic photo request prompt generated when confidence is insufficient.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "itemId": { "type": "string", "maxLength": 128 },
+        "missingDatapoint": { "type": "string", "maxLength": 256 },
+        "financialImpact": { "type": "string", "maxLength": 1024 },
+        "exactShotDirective": { "type": "string", "maxLength": 1024 },
+        "dispatchScript": { "type": "string", "maxLength": 1024 },
+        "status": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "ownerId", "missingDatapoint", "financialImpact", "exactShotDirective"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/items/{itemId}": {
+      "schema": "AppraisalItem",
+      "description": "Stores user-owned appraised inventory items, condition reports, and valuations."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "ExecutionTask",
+      "description": "Stores user roadmap milestones and operational garage tasks."
+    },
+    "/users/{userId}/supplementaryRequests/{requestId}": {
+      "schema": "SupplementaryRequest",
+      "description": "Stores prompts and requests for missing forensic photos."
+    }
+  }
+}

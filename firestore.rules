@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all unmapped collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidAppraisalItem(data, userId) {
+      return data.ownerId == userId
+        && data.id is string && data.id.size() <= 128
+        && data.assetName is string && data.assetName.size() <= 256
+        && data.category is string && data.category.size() <= 64
+        && data.confidenceRating is string && data.confidenceRating.size() <= 64
+        && data.status is string && data.status.size() <= 64;
+    }
+
+    function isValidExecutionTask(data, userId) {
+      return data.ownerId == userId
+        && data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 256
+        && data.completed is bool;
+    }
+
+    function isValidSupplementaryRequest(data, userId) {
+      return data.ownerId == userId
+        && data.id is string && data.id.size() <= 128
+        && data.missingDatapoint is string && data.missingDatapoint.size() <= 256
+        && data.financialImpact is string && data.financialImpact.size() <= 1024
+        && data.exactShotDirective is string && data.exactShotDirective.size() <= 1024;
+    }
+
+    // User Subcollections
+    match /users/{userId} {
+      allow get, update: if isOwner(userId) && isValidId(userId);
+
+      // Inventory items collection
+      match /items/{itemId} {
+        allow get, list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) 
+          && isValidId(userId) 
+          && isValidId(itemId) 
+          && isValidAppraisalItem(incoming(), userId);
+        allow update: if isOwner(userId) 
+          && isValidId(userId) 
+          && isValidId(itemId) 
+          && isValidAppraisalItem(incoming(), userId)
+          && incoming().ownerId == existing().ownerId;
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(itemId);
+      }
+
+      // Execution roadmap & daily garage tasks collection
+      match /tasks/{taskId} {
+        allow get, list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) 
+          && isValidId(userId) 
+          && isValidId(taskId) 
+          && isValidExecutionTask(incoming(), userId);
+        allow update: if isOwner(userId) 
+          && isValidId(userId) 
+          && isValidId(taskId) 
+          && isValidExecutionTask(incoming(), userId)
+          && incoming().ownerId == existing().ownerId;
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(taskId);
+      }
+
+      // Supplementary photo prompt requests
+      match /supplementaryRequests/{requestId} {
+        allow get, list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) 
+          && isValidId(userId) 
+          && isValidId(requestId) 
+          && isValidSupplementaryRequest(incoming(), userId);
+        allow update: if isOwner(userId) 
+          && isValidId(userId) 
+          && isValidId(requestId) 
+          && isValidSupplementaryRequest(incoming(), userId)
+          && incoming().ownerId == existing().ownerId;
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(requestId);
+      }
+    }
+  }
+}

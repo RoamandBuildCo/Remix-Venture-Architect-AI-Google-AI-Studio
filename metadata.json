@@ -1,0 +1,8 @@
+{
+  "name": "Remix Venture Architect AI",
+  "description": "A high-stakes strategic overseer that converts your assets into a verified, risk-mitigated business architecture for financial success.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

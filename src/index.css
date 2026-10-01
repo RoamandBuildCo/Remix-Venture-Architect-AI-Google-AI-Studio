@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  header,
+  footer,
+  nav,
+  .no-print,
+  button {
+    display: none !important;
+  }
+
+  .print-area {
+    display: grid !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 auto !important;
+    padding: 0.5in !important;
+    box-shadow: none !important;
+  }
+
+  #printable-single-tag {
+    box-shadow: none !important;
+    margin: 1in auto !important;
+    page-break-inside: avoid;
+  }
+}

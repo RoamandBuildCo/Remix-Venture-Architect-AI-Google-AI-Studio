@@ -325,7 +325,7 @@ export const VisualPhotoGuides: React.FC<VisualPhotoGuidesProps> = ({
           <div>
             <div className="flex items-center gap-2 text-xs font-mono text-amber-400 uppercase tracking-wider mb-1">
               <Camera className="w-4 h-4" />
-              <span>VIALE Forensic Field Photography Manual</span>
+              <span>ShutterBuck Forensic Field Photography Manual</span>
             </div>
             <h1 className="text-2xl font-black text-slate-100 flex items-center gap-2">
               <span>Optimal Photo Angle & Lighting Guides</span>
@@ -342,7 +342,7 @@ export const VisualPhotoGuides: React.FC<VisualPhotoGuidesProps> = ({
                 className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-amber-950/40 transition-all cursor-pointer"
               >
                 <Camera className="w-4 h-4" />
-                <span>Launch VIALE Camera</span>
+                <span>Launch ShutterBuck Camera</span>
               </button>
             )}
           </div>

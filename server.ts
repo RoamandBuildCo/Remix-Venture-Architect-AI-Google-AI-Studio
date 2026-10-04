@@ -153,122 +153,208 @@ const appraisalSchema = {
   ],
 };
 
-// API: Forensic Appraisal Endpoint
+// Add your multiple API tokens to your .env and reference them here:
+const apifyToken = process.env.APIFY_API_TOKEN;
+const googleSearchApiToken = process.env.GOOGLE_SEARCH_API_TOKEN;
+
+// The Omni-Aggregator Endpoint (V2 Optimized)
 app.post('/api/appraise', async (req, res) => {
   try {
     const { images, categoryHint, operatorNotes } = req.body;
+    if (!images || images.length === 0) return res.status(400).json({ error: 'Image required.' });
+    if (!ai) throw new Error("Gemini API not configured. Check your GEMINI_API_KEY secret.");
 
-    if (!images || !Array.isArray(images) || images.length === 0) {
-      return res.status(400).json({ error: 'At least one image is required for appraisal.' });
-    }
-
-    if (ai) {
-      // Build multimodal parts
-      const parts: any[] = [];
-
-      for (const img of images) {
-        if (typeof img === 'string') {
-          // If data url: data:image/jpeg;base64,...
-          const matches = img.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
-          if (matches) {
-            parts.push({
-              inlineData: {
-                mimeType: matches[1],
-                data: matches[2],
-              },
-            });
-          } else {
-            // Raw base64 assume jpeg
-            parts.push({
-              inlineData: {
-                mimeType: 'image/jpeg',
-                data: img,
-              },
-            });
-          }
-        }
-      }
-
-      const promptText = `
-SYSTEM SPECIFICATION: VISUAL INVENTORY APPRAISAL & LEDGER ENGINE (VIALE)
-You are the Master Forensic Photo Appraiser and Chief Operating Officer for a turnaround business.
-The Operator is broke and liquidating apartment assets (e-bikes, electric scooters, TCG/collectibles, apparel, consumer electronics) into cash to build an emergency fortress and start a compounding business.
-
-OPERATING STANDARD: ZERO GUESSWORK.
-1. OCR & Optical Tag Audit: Extract all visible text, branding, SKU, motor wattage, serial, card set number, clothing RN tag.
-2. Condition Forensics: Inspect wear, tread, scratches, centering, fabric integrity, battery status.
-3. Market Valuation: Use 90-day sold historical comps (not active dream listings). Fast cash local (<48 hrs) vs Max yield online (minus 15% platform/shipping fees).
-4. Confidence Gate: If critical identification marks are obscured, assign MEDIUM or INSUFFICIENT and write the EXACT supplementary photo needed in missingDataAlert.
-5. Provide turnkey copy-paste listing title, dispute-proof description, bottom-dollar price, and instant negotiation scripts.
-
-${categoryHint ? `User Category Hint: ${categoryHint}` : ''}
-${operatorNotes ? `Operator Notes: ${operatorNotes}` : ''}
-Analyze the attached photo(s) now and output strictly the required JSON dossier.
-`;
-
-      parts.push({ text: promptText });
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: { parts },
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: appraisalSchema,
-          temperature: 0.2, // low temperature for forensic precision
+    // 1. Process Images
+    const parts: any[] = [];
+    for (const img of images) {
+      const matches = img.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+      parts.push({
+        inlineData: {
+          mimeType: matches ? matches[1] : 'image/jpeg',
+          data: matches ? matches[2] : img,
         },
       });
-
-      const responseText = response.text;
-      if (!responseText) {
-        throw new Error('Empty response from appraisal model');
-      }
-
-      const parsedData = JSON.parse(responseText);
-      return res.json({ success: true, dossier: parsedData, isLiveModel: true });
     }
 
-    // High-Fidelity Domain Fallback if API key is not yet set
-    const fallbackDossier = generateDomainFallback(images, categoryHint, operatorNotes);
-    return res.json({ success: true, dossier: fallbackDossier, isLiveModel: false });
+    // ---------------------------------------------------------
+    // PASS 1: SCOUT & IDENTITY GENERATION (Heavy Image Process)
+    // ---------------------------------------------------------
+    const keywordPrompt = `
+Analyze the attached image(s). Identify the exact item. 
+Output ONLY a raw JSON object with this exact schema:
+{ 
+  "keyword": "Specific Brand and Model Name (for search scraping)",
+  "visualDescription": "Highly detailed description of the actual item in the photo, including color, visible condition, wear and tear, and specific physical features."
+}
+`;
+    
+    const keywordResponse = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: { role: 'user', parts: [...parts, { text: keywordPrompt }] },
+      config: { responseMimeType: 'application/json', temperature: 0.1 }
+    });
+    
+    const parsedScout = JSON.parse(keywordResponse.text || '{"keyword":"", "visualDescription":""}');
+    const searchTarget = parsedScout.keyword;
+    const visualProfile = parsedScout.visualDescription;
+
+    let marketDataStr = "No comps found.";
+    let calculatedMedian = 0;
+
+    if (searchTarget && apifyToken && googleSearchApiToken) {
+      console.log(`[SHUTTERBUCK OMNI-AGGREGATOR V2] Firing parallel scrape for: ${searchTarget}`);
+
+      // ---------------------------------------------------------
+      // PASS 2: FAN-OUT FETCH WITH 8-SECOND KILL SWITCH
+      // ---------------------------------------------------------
+      
+      // Resource 1: eBay Sold Comps (8s Timeout)
+      const ebayPromise = fetch(`https://api.apify.com/v2/actors/caffein.dev~ebay-sold-listings/run-sync-get-dataset-items?token=${apifyToken}`, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords: [searchTarget], count: 8 }),
+        signal: AbortSignal.timeout(8000)
+      }).then(res => res.json());
+
+      // Resource 2: Mercari Active/Sold Comps (8s Timeout)
+      const mercariPromise = fetch(`https://api.apify.com/v2/actors/automation-lab~mercari-us-listings-scraper/run-sync-get-dataset-items?token=${apifyToken}`, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ searchKeywords: [searchTarget], maxListings: 5 }),
+        signal: AbortSignal.timeout(8000)
+      }).then(res => res.json());
+
+      // Resource 3: Google Search API (Lightning fast, 8s Timeout added for safety)
+      const searchPromise = fetch('https://google.serper.dev/search', {
+        method: 'POST', 
+        headers: { 'X-API-KEY': googleSearchApiToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q: `${searchTarget} "sold for" OR "price" site:liveauctioneers.com OR site:offerup.com` }),
+        signal: AbortSignal.timeout(8000)
+      }).then(res => res.json());
+
+      // Await all resources. allSettled prevents a TimeoutError from crashing the entire block.
+      const results = await Promise.allSettled([ebayPromise, mercariPromise, searchPromise]);
+
+      // ---------------------------------------------------------
+      // PASS 3: THE COMPILER
+      // ---------------------------------------------------------
+      const allPrices: number[] = [];
+      let evidenceLog = "";
+
+      if (results[0].status === 'fulfilled' && Array.isArray(results[0].value)) {
+        results[0].value.forEach((item: any) => {
+          if (item.totalPrice) {
+            allPrices.push(Number(item.totalPrice));
+            evidenceLog += `[eBay Sold] $${item.totalPrice}\n`;
+          }
+        });
+      } else if (results[0].status === 'rejected') {
+        console.warn(`[SHUTTERBUCK] eBay Scraper Failed or Timed Out:`, results[0].reason);
+      }
+
+      if (results[1].status === 'fulfilled' && Array.isArray(results[1].value)) {
+        results[1].value.forEach((item: any) => {
+          if (item.price) {
+            allPrices.push(Number(item.price));
+            evidenceLog += `[Mercari ${item.isSold ? 'Sold' : 'Active'}] $${item.price}\n`;
+          }
+        });
+      } else if (results[1].status === 'rejected') {
+        console.warn(`[SHUTTERBUCK] Mercari Scraper Failed or Timed Out:`, results[1].reason);
+      }
+
+      if (results[2].status === 'fulfilled' && results[2].value.organic) {
+        results[2].value.organic.forEach((result: any) => {
+          const priceMatch = result.snippet.match(/\$(\d{1,3}(,\d{3})*(\.\d{2})?)/);
+          if (priceMatch) {
+            const price = parseFloat(priceMatch[1].replace(/,/g, ''));
+            allPrices.push(price);
+            evidenceLog += `[Auction/Web Snippet] $${price} via ${result.domain}\n`;
+          }
+        });
+      } else if (results[2].status === 'rejected') {
+        console.warn(`[SHUTTERBUCK] Serper Scraper Failed or Timed Out:`, results[2].reason);
+      }
+
+      if (allPrices.length > 0) {
+        allPrices.sort((a, b) => a - b);
+        const mid = Math.floor(allPrices.length / 2);
+        calculatedMedian = allPrices.length % 2 !== 0 ? allPrices[mid] : (allPrices[mid - 1] + allPrices[mid]) / 2;
+        
+        marketDataStr = `
+TOTAL COMPS FOUND: ${allPrices.length}
+MATHEMATICAL MEDIAN PRICE: $${calculatedMedian.toFixed(2)}
+RAW EVIDENCE LOG:
+${evidenceLog}
+`;
+      }
+    }
+
+    // ---------------------------------------------------------
+    // PASS 4: THE EDUCATED EVALUATION (Text Only - No Images)
+    // ---------------------------------------------------------
+    const finalPrompt = `
+You are the formatting engine. Output strictly in the defined JSON schema for the asset: "${searchTarget}".
+
+PHYSICAL DESCRIPTION:
+Use this exact visual profile to fill out the description and condition fields:
+"${visualProfile}"
+
+OMNI-AGGREGATOR MARKET DATA:
+The mathematical median from all active and sold resources is $${calculatedMedian}.
+Use this median to dictate the fast cash and max yield prices. 
+${marketDataStr}
+
+${categoryHint ? `Category: ${categoryHint}` : ''}
+${operatorNotes ? `Notes: ${operatorNotes}` : ''}
+`;
+
+    // Note: 'parts' array is no longer passed here to save heavy token compute. 
+    // We only pass the text prompt containing the asset name and scraped prices.
+    const finalResponse = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: { role: 'user', parts: [{ text: finalPrompt }] },
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: appraisalSchema,
+        temperature: 0.1, 
+      },
+    });
+
+    const parsedData = JSON.parse(finalResponse.text || '{}');
+    return res.json({ success: true, dossier: parsedData, isLiveModel: true });
+
   } catch (error: any) {
     console.error('Appraisal error:', error);
-    // Provide intelligent fallback on transient model error
-    const fallbackDossier = generateDomainFallback(req.body.images, req.body.categoryHint, req.body.operatorNotes);
-    return res.json({
-      success: true,
-      dossier: fallbackDossier,
-      isLiveModel: false,
-      warning: error.message || 'Processed using high-precision domain knowledge engine.',
-    });
+    return res.status(500).json({ error: error.message });
   }
 });
 
-// Custom script generation endpoint
+// Custom script generation endpoint (Optimized model)
 app.post('/api/generate-script', async (req, res) => {
   try {
     const { buyerMessage, itemTitle, askingPrice, bottomPrice } = req.body;
 
     if (ai) {
       const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
+        model: 'gemini-1.5-flash',
         contents: `You are the ruthless Anti-Scam Negotiation Shield for an operator selling "${itemTitle}" (Listed at $${askingPrice}, bottom floor $${bottomPrice}).
 The buyer just messaged: "${buyerMessage}"
 
 Provide:
 1. Threat / Scam Assessment (is this an advance fee scam, fake Zelle confirmation, aggressive lowballer, or legitimate buyer?)
 2. Exact copy-paste response script that protects the seller's cash, safety, and price floor.
-3. Rule to enforce during meetup (e.g. Police station only, cash in hand before touching bike).
+3. Rule to enforce during meetup.
 
 Keep it concise and tactical.`,
         config: {
-          temperature: 0.3,
+          temperature: 0.2,
         },
       });
 
       return res.json({ success: true, analysis: response.text });
     }
 
-    // Fallback script engine
     const analysis = generateFallbackNegotiationScript(buyerMessage, itemTitle, askingPrice, bottomPrice);
     return res.json({ success: true, analysis });
   } catch (err: any) {
@@ -278,8 +364,7 @@ Keep it concise and tactical.`,
   }
 });
 
-// API: Multi-Turn Gemini Chatbot with Role-Specific Models
-// Uses gemini-3.1-pro-preview for complex tasks, gemini-3.5-flash for general tasks, gemini-3.1-flash-lite for fast tasks
+// API: Multi-Turn Gemini Chatbot (Optimized with startChat and production models)
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages, systemInstruction, taskType } = req.body;
@@ -287,11 +372,12 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Messages array is required.' });
     }
 
-    let modelName = 'gemini-3.5-flash'; // general tasks default
-    if (taskType === 'complex' || req.body.model === 'gemini-3.1-pro-preview') {
-      modelName = 'gemini-3.1-pro-preview';
-    } else if (taskType === 'fast' || req.body.model === 'gemini-3.1-flash-lite') {
-      modelName = 'gemini-3.1-flash-lite';
+    // OPTIMIZATION: Mapped to current production stable endpoints
+    let modelName = 'gemini-1.5-flash';
+    if (taskType === 'complex' || req.body.model?.includes('pro')) {
+      modelName = 'gemini-1.5-pro';
+    } else if (taskType === 'fast' || req.body.model?.includes('lite') || req.body.model?.includes('8b')) {
+      modelName = 'gemini-1.5-flash-8b'; // Ultra-low latency endpoint
     }
 
     if (!ai) {
@@ -302,22 +388,25 @@ app.post('/api/chat', async (req, res) => {
       });
     }
 
-    const contents = messages.map((m: any) => ({
+    // OPTIMIZATION: Extract history vs the latest prompt for stateful chat sessions
+    const history = messages.slice(0, -1).map((m: any) => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.text || '' }],
     }));
+    const latestMessage = messages[messages.length - 1].text;
 
     try {
-      const response = await ai.models.generateContent({
+      // OPTIMIZATION: Use the native chat abstraction for compound-memory retention
+      const chatSession = ai.chats.create({
         model: modelName,
-        contents,
+        history: history,
         config: {
-          systemInstruction:
-            systemInstruction ||
-            'You are the Master Overseer & LEV Shop Copilot for an independent Los Angeles light-electric-vehicle repair and resale business. Provide direct, tactical, profit-maximizing, and safety-critical guidance. Zero fluff.',
+          systemInstruction: systemInstruction || 'You are the Master Overseer & LEV Shop Copilot for an independent Los Angeles light-electric-vehicle repair and resale business. Provide direct, tactical, profit-maximizing, and safety-critical guidance. Zero fluff.',
           temperature: taskType === 'complex' ? 0.3 : 0.7,
         },
       });
+
+      const response = await chatSession.sendMessage({ message: latestMessage });
 
       return res.json({
         success: true,
@@ -325,19 +414,21 @@ app.post('/api/chat', async (req, res) => {
         modelUsed: modelName,
       });
     } catch (genError: any) {
-      // Graceful fallback from pro model if quota or preview restriction occurs
-      if (modelName === 'gemini-3.1-pro-preview') {
-        const fallbackRes = await ai.models.generateContent({
-          model: 'gemini-3.5-flash',
-          contents,
+      // Graceful fallback from pro model
+      if (modelName === 'gemini-1.5-pro') {
+        const fallbackChatSession = ai.chats.create({
+          model: 'gemini-1.5-flash',
+          history: history,
           config: {
             systemInstruction: systemInstruction || 'You are the Master Overseer Copilot.',
           },
         });
+        const fallbackRes = await fallbackChatSession.sendMessage({ message: latestMessage });
+        
         return res.json({
           success: true,
           reply: fallbackRes.text || '',
-          modelUsed: 'gemini-3.5-flash (auto-fallback)',
+          modelUsed: 'gemini-1.5-flash (auto-fallback)',
         });
       }
       throw genError;
@@ -348,8 +439,7 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// API: Google Search Grounding for Live Comps, Recalls, and Market Intelligence
-// Uses gemini-3.5-flash with googleSearch tool
+// API: Google Search Grounding (Optimized model)
 app.post('/api/search-grounding', async (req, res) => {
   try {
     const { query } = req.body;
@@ -366,7 +456,7 @@ app.post('/api/search-grounding', async (req, res) => {
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-1.5-flash',
       contents: `Provide accurate, up-to-date market intelligence and technical analysis for: ${query}. Include recent sold comps, recalls, pricing trends, and supplier availability.`,
       config: {
         tools: [{ googleSearch: {} }],
@@ -395,8 +485,7 @@ app.post('/api/search-grounding', async (req, res) => {
   }
 });
 
-// API: Google Maps Grounding for Safe Exchange Zones and Local Suppliers
-// Uses gemini-3.5-flash with googleMaps tool
+// API: Google Maps Grounding (Optimized model)
 app.post('/api/maps-grounding', async (req, res) => {
   try {
     const { query, latitude, longitude } = req.body;
@@ -412,11 +501,11 @@ app.post('/api/maps-grounding', async (req, res) => {
       });
     }
 
-    const lat = latitude || 34.0522; // Default Los Angeles
+    const lat = latitude || 34.0522; 
     const lng = longitude || -118.2437;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-1.5-flash',
       contents: `Find and recommend specific real-world locations for: ${query}. Focus on safety, public visibility, safe exchange zones, or verified parts suppliers.`,
       config: {
         tools: [{ googleMaps: {} }],
@@ -712,7 +801,6 @@ function generateDomainFallback(images: any[], categoryHint?: string, notes?: st
     };
   }
 
-  // Default Consumer Goods / Apparel fallback
   return {
     assetName: 'Arc\'teryx Beta LT Gore-Tex Hooded Jacket (Men\'s Large)',
     category: 'apparel',
@@ -800,7 +888,7 @@ function generateFallbackNegotiationScript(buyerMessage: string = '', itemTitle:
 `;
 }
 
-// Live API WebSocket Server for gemini-3.8-live real-time voice conversations
+// Live API WebSocket Server for Gemini real-time voice conversations
 const wss = new WebSocketServer({ noServer: true });
 
 server.on('upgrade', (request, socket, head) => {
@@ -823,7 +911,7 @@ wss.on('connection', async (clientWs: WebSocket) => {
   let session: any = null;
   try {
     session = await ai.live.connect({
-      model: 'gemini-3.8-live',
+      model: 'gemini-2.0-flash-exp', // OPTIMIZATION: Updated for Live API compatibility
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
@@ -897,5 +985,5 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[PHOENIX VIALE SERVER] Running on port ${PORT}`);
+  console.log(`[SHUTTERBUCK SERVER] Running on port ${PORT}`);
 });

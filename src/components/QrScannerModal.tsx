@@ -111,8 +111,10 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
       const url = new URL(codeText);
       targetId = url.searchParams.get('asset') || url.searchParams.get('item') || url.searchParams.get('dossier');
     } catch {
-      // not a full url, check for PHOENIX:ASSET:id or raw id
-      if (codeText.startsWith('PHOENIX:ASSET:')) {
+      // not a full url, check for SHUTTERBUCK:ASSET: or PHOENIX:ASSET: or raw id
+      if (codeText.startsWith('SHUTTERBUCK:ASSET:')) {
+        targetId = codeText.replace('SHUTTERBUCK:ASSET:', '');
+      } else if (codeText.startsWith('PHOENIX:ASSET:')) {
         targetId = codeText.replace('PHOENIX:ASSET:', '');
       } else {
         targetId = codeText.trim();

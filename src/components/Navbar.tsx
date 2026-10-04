@@ -1,171 +1,456 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Camera,
+  LayoutDashboard,
   Layers,
-  CheckSquare,
-  ShieldAlert,
-  Vault,
-  BookOpen,
+  Wrench,
+  Zap,
+  Package,
   DollarSign,
-  TrendingUp,
-  Lock,
-  Cpu,
-  ScanLine,
+  Tag,
+  Search,
+  Clock,
   QrCode,
-  FileSpreadsheet,
+  Plus,
   Compass,
+  FileSpreadsheet,
+  Moon,
+  Sun,
+  ShieldAlert,
+  ChevronDown,
+  Menu,
+  X,
   FileQuestion,
-  Cloud,
-  Bot,
-  Mic,
-  Globe
+  RotateCcw,
+  AlertTriangle,
 } from 'lucide-react';
 import { AppraisalDossier } from '../types';
-import { formatCurrency } from '../utils/storage';
 
 interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   items: AppraisalDossier[];
   onOpenScanner?: () => void;
+  onOpenIntake?: () => void;
+  isLightMode?: boolean;
+  onToggleTheme?: () => void;
+  onResetEngine?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, items, onOpenScanner }) => {
-  // Compute financial totals
-  const totalRealizedCash = items
-    .filter((i) => i.status === 'sold' && i.realizedSalePrice)
-    .reduce((acc, curr) => acc + (curr.realizedSalePrice || 0), 0);
+export const Navbar: React.FC<NavbarProps> = ({
+  activeTab,
+  setActiveTab,
+  items,
+  onOpenScanner,
+  onOpenIntake,
+  isLightMode,
+  onToggleTheme,
+  onResetEngine,
+}) => {
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const totalActiveValue = items
-    .filter((i) => i.status !== 'sold' && i.status !== 'archived')
-    .reduce((acc, curr) => acc + (curr.financials.fastCashPrice || 0), 0);
+  const safetyHoldsCount = items.filter(
+    (i) => i.safetyHold || i.batteryRecord?.safetyHold || i.status === 'On hold'
+  ).length;
 
-  const familySafetyVault = totalRealizedCash * 0.5;
-  const workingArbitrage = totalRealizedCash * 0.4;
+  const primaryTabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'inventory', label: 'Inventory', icon: Layers, badgeCount: items.length },
+    { id: 'intake', label: 'Intake & Diag', icon: Plus },
+    {
+      id: 'battery',
+      label: 'Battery Safety',
+      icon: Zap,
+      hasSafetyAlert: safetyHoldsCount > 0,
+    },
+    { id: 'repairs', label: 'Repair Jobs', icon: Wrench },
+    { id: 'parts', label: 'Parts Stock', icon: Package },
+    { id: 'pricing', label: 'Profit & Pricing', icon: DollarSign },
+    { id: 'listings', label: 'Listing Drafts', icon: Tag },
+    { id: 'research', label: 'Research', icon: Search },
+    { id: 'daily', label: 'Daily Ops', icon: Clock },
+  ];
 
-  const tabs = [
-    { id: 'appraiser', label: 'VIALE Appraiser', icon: Camera, badge: 'AI Vision' },
-    { id: 'chat', label: 'Gemini Chatbot', icon: Bot, badge: '3-Tier Models' },
-    { id: 'voice', label: 'Voice Dispatch', icon: Mic, badge: '3.8 Live' },
-    { id: 'grounding', label: 'Search & Maps', icon: Globe, badge: 'Grounded' },
-    { id: 'ledger', label: 'Inventory Ledger', icon: Layers, count: items.length },
-    { id: 'photoguides', label: 'Photo Guides', icon: Compass, badge: 'Angles' },
-    { id: 'promptengine', label: 'Missing Prompts', icon: FileQuestion, badge: 'Template' },
-    { id: 'workspace', label: 'Sheets & Tasks', icon: FileSpreadsheet, badge: 'Cloud Sync' },
-    { id: 'execution', label: 'Task Execution', icon: CheckSquare, badge: 'WIP=1' },
-    { id: 'antiscam', label: 'Anti-Scam & Scripts', icon: ShieldAlert },
-    { id: 'vault', label: 'Fortress Vault', icon: Vault },
-    { id: 'directives', label: 'Overseer SOPs', icon: BookOpen },
+  const secondaryTabs = [
+    { id: 'workspace', label: 'Google Sheets & Tasks', icon: FileSpreadsheet },
+    { id: 'photoguides', label: 'Visual Photo Guides', icon: Compass },
+    { id: 'promptengine', label: 'AI Missing Photo Prompts', icon: FileQuestion },
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-slate-100">
-      {/* Top Cockpit Ticker Bar */}
-      <div className="border-b border-slate-800/80 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 bg-slate-900/60">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono tracking-wider font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            SYSTEM ACTIVE
-          </div>
-          <span className="text-slate-400 font-mono hidden sm:inline">
-            OVERSEER ENGINE // ZERO GUESSWORK
-          </span>
-        </div>
+    <>
+      {/* Desktop & Tablet Top Navigation */}
+      <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-slate-100">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          {/* Zone 1: Single element brand mark */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="text-left cursor-pointer group"
+            >
+              <div className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-amber-500 shrink-0" />
+                <span className="group-hover:text-amber-400 transition-colors">
+                  ShutterBuck
+                </span>
+              </div>
+            </button>
 
-        <div className="flex items-center gap-4 text-xs font-mono">
-          <div className="flex items-center gap-1.5" title="Fast Cash Valuation of Unsold Inventory">
-            <span className="text-slate-400">Inventory Liquidity:</span>
-            <span className="text-sky-400 font-bold">{formatCurrency(totalActiveValue)}</span>
-          </div>
-
-          <div className="flex items-center gap-1.5" title="Physical Cash Harvested & Realized">
-            <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-slate-400">Cash Realized:</span>
-            <span className="text-emerald-400 font-bold">{formatCurrency(totalRealizedCash)}</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300" title="50% Family Safety Vault (Untouchable Survival Cash)">
-            <Lock className="w-3 h-3 text-amber-400" />
-            <span>Family Vault (50%):</span>
-            <span className="font-bold">{formatCurrency(familySafetyVault)}</span>
+            {safetyHoldsCount > 0 && (
+              <button
+                onClick={() => setActiveTab('battery')}
+                className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40 text-[11px] font-mono font-bold cursor-pointer animate-pulse"
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>{safetyHoldsCount} SAFETY HOLD</span>
+              </button>
+            )}
           </div>
 
-          <div className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-300" title="40% Active Working Capital Arbitrage">
-            <TrendingUp className="w-3 h-3 text-indigo-400" />
-            <span>Arbitrage Fund (40%):</span>
-            <span className="font-bold">{formatCurrency(workingArbitrage)}</span>
-          </div>
-        </div>
-      </div>
+          {/* Zone 2: Navigation Links (Desktop) */}
+          <nav className="hidden xl:flex items-center gap-1">
+            {primaryTabs.slice(0, 7).map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? 'bg-amber-500/15 text-amber-400 border border-amber-500/40'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                  {tab.hasSafetyAlert && (
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                  )}
+                </button>
+              );
+            })}
 
-      {/* Main Nav Bar */}
-      <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-600 to-rose-600 p-0.5 shadow-lg shadow-orange-950/40">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-              <Cpu className="w-5 h-5 text-amber-400" />
+            {/* More Dropdown for additional modules */}
+            <div className="relative">
+              <button
+                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
+                  isMoreMenuOpen ||
+                  ['listings', 'research', 'daily', 'workspace', 'photoguides', 'promptengine'].includes(activeTab)
+                    ? 'text-amber-400 bg-slate-900'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>More</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+
+              {isMoreMenuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1.5 z-50 text-xs"
+                  onClick={() => setIsMoreMenuOpen(false)}
+                >
+                  {primaryTabs.slice(7).map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center gap-2 px-3.5 py-2 text-left hover:bg-slate-800 cursor-pointer ${
+                          activeTab === tab.id ? 'text-amber-400 font-bold' : 'text-slate-300'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 text-slate-400" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                  <div className="border-t border-slate-800 my-1" />
+                  {secondaryTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center gap-2 px-3.5 py-2 text-left hover:bg-slate-800 cursor-pointer ${
+                          activeTab === tab.id ? 'text-amber-400 font-bold' : 'text-slate-300'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 text-slate-400" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-black tracking-tight bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 bg-clip-text text-transparent">
-                PHOENIX VIALE
-              </span>
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-800 text-slate-300 border border-slate-700">
-                2026 FORENSIC V3
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 tracking-wide">
-              Visual Inventory Appraisal & Strategic Startup Execution Engine
-            </p>
+          </nav>
+
+          {/* Zone 3: Primary Actions */}
+          <div className="flex items-center gap-2">
+            {onResetEngine && (
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                title="Reset Engine: Wipe all past appraisals, clear localStorage, and return to blank state"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 hover:border-rose-700 text-xs font-semibold cursor-pointer transition-all shadow-sm"
+              >
+                <RotateCcw className="w-3.5 h-3.5 stroke-[2.2]" />
+                <span className="hidden sm:inline">Reset Engine</span>
+              </button>
+            )}
+
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                title="Toggle Light / Dark Workshop Mode"
+                className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 cursor-pointer"
+              >
+                {isLightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              </button>
+            )}
+
+            {onOpenScanner && (
+              <button
+                onClick={onOpenScanner}
+                title="Scan QR Asset Tag"
+                className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 cursor-pointer"
+              >
+                <QrCode className="w-4 h-4 text-amber-400" />
+              </button>
+            )}
+
+            {onOpenIntake && (
+              <button
+                onClick={onOpenIntake}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs cursor-pointer shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>+ Intake</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Tab Buttons */}
-        <nav className="flex items-center gap-1 overflow-x-auto max-w-full pb-1 md:pb-0 scrollbar-none">
-          {tabs.map((tab) => {
+        {/* Secondary Tablet Scroll Row (md to xl) */}
+        <div className="hidden md:flex xl:hidden overflow-x-auto px-4 py-2 border-t border-slate-800/80 gap-1 scrollbar-none">
+          {primaryTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? 'bg-amber-500/15 text-amber-400 border border-amber-500/40 shadow-sm shadow-amber-950/20'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
+                <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
-                {tab.count !== undefined && (
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                    isActive ? 'bg-amber-400/20 text-amber-300' : 'bg-slate-800 text-slate-400'
-                  }`}>
-                    {tab.count}
-                  </span>
-                )}
-                {tab.badge && (
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    {tab.badge}
-                  </span>
-                )}
               </button>
             );
           })}
+          {secondaryTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </header>
 
-          {onOpenScanner && (
-            <button
-              onClick={onOpenScanner}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all whitespace-nowrap cursor-pointer shadow-md shadow-amber-950/30 ml-1"
-              title="Scan physical QR tag with device camera"
-            >
-              <ScanLine className="w-3.5 h-3.5" />
-              <span>Scan Tag</span>
-            </button>
-          )}
-        </nav>
-      </div>
-    </header>
+      {/* Mobile Bottom Navigation Dock (Variation 5 Ergonomics - 1-hand thumb reach) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 text-slate-300 px-2 py-2 flex items-center justify-around shadow-2xl safe-area-pb">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
+            activeTab === 'dashboard' ? 'text-amber-400 font-bold' : 'text-slate-400'
+          }`}
+        >
+          <LayoutDashboard className="w-5 h-5" />
+          <span>Home</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('inventory')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer relative ${
+            activeTab === 'inventory' ? 'text-amber-400 font-bold' : 'text-slate-400'
+          }`}
+        >
+          <Layers className="w-5 h-5" />
+          <span>Inventory</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (onOpenIntake) onOpenIntake();
+            else setActiveTab('intake');
+          }}
+          className="flex flex-col items-center justify-center w-12 h-12 -mt-5 rounded-full bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/30 font-bold cursor-pointer active:scale-95 transition-transform"
+        >
+          <Plus className="w-6 h-6 stroke-[3]" />
+        </button>
+
+        <button
+          onClick={() => setActiveTab('battery')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer relative ${
+            activeTab === 'battery' ? 'text-amber-400 font-bold' : 'text-slate-400'
+          }`}
+        >
+          <div className="relative">
+            <Zap className="w-5 h-5" />
+            {safetyHoldsCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+            )}
+          </div>
+          <span>Battery</span>
+        </button>
+
+        <button
+          onClick={() => setIsMoreMenuOpen(true)}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
+            ['repairs', 'parts', 'pricing', 'listings', 'research', 'daily', 'workspace'].includes(activeTab)
+              ? 'text-amber-400 font-bold'
+              : 'text-slate-400'
+          }`}
+        >
+          <Menu className="w-5 h-5" />
+          <span>Modules</span>
+        </button>
+      </nav>
+
+      {/* Mobile More Modules Sheet / Drawer */}
+      {isMoreMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-60 bg-black/80 backdrop-blur-xs flex flex-col justify-end">
+          <div className="bg-slate-900 border-t border-slate-800 rounded-t-2xl p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                All Command Modules
+              </span>
+              <button
+                onClick={() => setIsMoreMenuOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {primaryTabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className={`p-3 rounded-xl border text-left flex items-center gap-2.5 ${
+                      isActive
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        : 'bg-slate-950 text-slate-200 border-slate-800'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="truncate">{tab.label}</span>
+                  </button>
+                );
+              })}
+              {secondaryTabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className={`p-3 rounded-xl border text-left flex items-center gap-2.5 ${
+                      isActive
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        : 'bg-slate-950 text-slate-200 border-slate-800'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span className="truncate">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {onResetEngine && (
+              <div className="pt-2 border-t border-slate-800">
+                <button
+                  onClick={() => {
+                    setIsMoreMenuOpen(false);
+                    setShowResetConfirm(true);
+                  }}
+                  className="w-full p-3 rounded-xl border border-rose-800/60 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 flex items-center justify-center gap-2 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Reset Engine (Wipe All Appraisals)</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reset Engine Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-white">Reset ShutterBuck Engine?</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  This will execute <code className="text-rose-300 font-mono">localStorage.clear()</code>, wipe all past appraisals, repair records, parts, and return the application to an absolute blank state.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowResetConfirm(false);
+                  if (onResetEngine) onResetEngine();
+                }}
+                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-lg shadow-rose-900/40"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Confirm Reset Engine</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };

@@ -399,7 +399,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
               <div>
                 <h2 className="text-base font-bold text-slate-100">Google Tasks Engine</h2>
                 <p className="text-[11px] text-slate-400">
-                  Synced with "⚡ VIALE LEV Operations" task list
+                  Synced with "⚡ ShutterBuck Operations" task list
                 </p>
               </div>
             </div>
@@ -450,7 +450,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
               </div>
             ) : tasks.length === 0 ? (
               <div className="p-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-                No active tasks found in "⚡ VIALE LEV Operations". Click "Sync Roadmap" to push your execution milestones!
+                No active tasks found in "⚡ ShutterBuck Operations". Click "Sync Roadmap" to push your execution milestones!
               </div>
             ) : (
               tasks.map((task) => {

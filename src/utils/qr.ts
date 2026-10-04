@@ -6,7 +6,7 @@ export function getAssetDeepLink(itemId: string): string {
     const pathname = window.location.pathname;
     return `${origin}${pathname}?asset=${encodeURIComponent(itemId)}`;
   }
-  return `https://phoenix-viale.local/?asset=${encodeURIComponent(itemId)}`;
+  return `https://shutterbuck.local/?asset=${encodeURIComponent(itemId)}`;
 }
 
 export async function generateAssetQrDataUrl(itemId: string): Promise<string> {

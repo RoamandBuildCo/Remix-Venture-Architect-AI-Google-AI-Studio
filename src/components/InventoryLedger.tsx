@@ -380,7 +380,7 @@ export const InventoryLedger: React.FC<InventoryLedgerProps> = ({
               {filteredItems.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-slate-500">
-                    No items match the selected filter. Click "VIALE Appraiser" to photograph and add new assets.
+                    No items match the selected filter. Click "ShutterBuck Appraiser" to photograph and add new assets.
                   </td>
                 </tr>
               ) : (

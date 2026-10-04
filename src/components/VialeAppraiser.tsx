@@ -146,7 +146,7 @@ export const VialeAppraiser: React.FC<VialeAppraiserProps> = ({
 
       const raw = data.dossier;
       const fullDossier: AppraisalDossier = {
-        id: `viale-${Date.now()}`,
+        id: `shutterbuck-${Date.now()}`,
         assetName: raw.assetName || 'Unidentified Asset',
         category: raw.category || categoryHint,
         confidenceRating: raw.confidenceRating || 'HIGH (99%+)',
@@ -223,7 +223,7 @@ export const VialeAppraiser: React.FC<VialeAppraiserProps> = ({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                MODULE 1: VIALE ENGINE
+                MODULE 1: SHUTTERBUCK ENGINE
               </span>
               <span className="text-xs text-slate-400 font-mono">
                 Multimodal Optical Forensic Appraiser
@@ -382,7 +382,7 @@ export const VialeAppraiser: React.FC<VialeAppraiserProps> = ({
               ) : (
                 <>
                   <Sparkles className="w-5 h-5 text-slate-950" />
-                  <span>RUN FORENSIC APPRAISAL (VIALE)</span>
+                  <span>RUN FORENSIC APPRAISAL (SHUTTERBUCK)</span>
                 </>
               )}
             </button>
@@ -512,7 +512,7 @@ export const VialeAppraiser: React.FC<VialeAppraiserProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            const prompt = `[VIALE FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]\nITEM: ${dossier.assetName}\nMISSING DATAPOINT: ${dossier.missingDataAlert}\nIMPACT: Mandatory to verify condition tier and prevent dispute risk.\nEXACT SHOT DIRECTIVE: ${dossier.missingDataAlert}`;
+                            const prompt = `[SHUTTERBUCK FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]\nITEM: ${dossier.assetName}\nMISSING DATAPOINT: ${dossier.missingDataAlert}\nIMPACT: Mandatory to verify condition tier and prevent dispute risk.\nEXACT SHOT DIRECTIVE: ${dossier.missingDataAlert}`;
                             copyToClipboard(prompt, 'ai-prompt');
                           }}
                           className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 cursor-pointer transition-colors"
@@ -524,7 +524,7 @@ export const VialeAppraiser: React.FC<VialeAppraiserProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            const sms = `Hey! To lock in maximum price on "${dossier.assetName}", VIALE needs one more photo: ${dossier.missingDataAlert}. Please snap a clear close-up!`;
+                            const sms = `Hey! To lock in maximum price on "${dossier.assetName}", ShutterBuck needs one more photo: ${dossier.missingDataAlert}. Please snap a clear close-up!`;
                             copyToClipboard(sms, 'sms-text');
                           }}
                           className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 cursor-pointer transition-colors"

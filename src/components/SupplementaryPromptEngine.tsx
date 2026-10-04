@@ -35,14 +35,14 @@ const PRESET_TEMPLATES: SupplementaryPromptTemplate[] = [
       'Crucial for verifying authentic factory batch against local LEV theft databases, validating warranty status, and preventing dispute chargebacks from buyers claiming wrong model year.',
     exactShotDirective:
       'A well-lit macro photo of the stamped aluminum serial or QR sticker located on the underside of the scooter deck or bottom bracket shell. Must be taken 4–6 inches away with direct 5000K flashlight illumination and zero motion blur.',
-    aiStudioPromptTemplate: `[VIALE FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
+    aiStudioPromptTemplate: `[SHUTTERBUCK FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
 STATUS: INSUFFICIENT CONFIDENCE (<80%)
 ASSET CATEGORY: Light Electric Vehicle (LEV)
 MISSING DATAPOINT: Frame Serial Number Tag / Bottom Bracket VIN Stamping
 APPRAISAL IMPACT: Without verifiable optical confirmation of the 12+ digit stamped serial number, the system cannot cross-reference manufacturer revisions or verify clear title. Fast-cash valuation is capped at salvage floor until evidence is submitted.
 REQUIRED SHOT DIRECTIVE: Provide a high-resolution, unblurred macro photograph (minimum 1080p) taken 4–6 inches away directly perpendicular to the underside bottom bracket or deck frame stamping. Ensure all alphanumeric characters are legible under direct, non-glare illumination.`,
     fieldTechnicianScript:
-      'Hey! VIALE confidence is currently restricted because the frame serial number / VIN is missing. Please snap a clear close-up photo of the metal stamped numbers on the underside of the frame/deck so we can unlock top-dollar pricing. Thanks!',
+      'Hey! ShutterBuck confidence is currently restricted because the frame serial number / VIN is missing. Please snap a clear close-up photo of the metal stamped numbers on the underside of the frame/deck so we can unlock top-dollar pricing. Thanks!',
   },
   {
     id: 'scooter-battery',
@@ -52,7 +52,7 @@ REQUIRED SHOT DIRECTIVE: Provide a high-resolution, unblurred macro photograph (
       'Crucial for distinguishing genuine OEM Panasonic/Samsung/LG cell packs from dangerous, fire-hazardous unbranded aftermarket packs. A counterfeit battery cuts resale value by $300-$500 and creates severe liability.',
     exactShotDirective:
       'A crisp close-up photo of the printed technical label on the lithium-ion battery pack casing, showing Nominal Voltage (e.g. 48V or 52V), Capacity (Ah / Wh), and manufacturer certification marks.',
-    aiStudioPromptTemplate: `[VIALE FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
+    aiStudioPromptTemplate: `[SHUTTERBUCK FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
 STATUS: INSUFFICIENT CONFIDENCE (<80%)
 ASSET CATEGORY: Light Electric Vehicle (LEV)
 MISSING DATAPOINT: Battery Pack Specification Label (Nominal Voltage, Ah, Wh, UL 2849 / CE Marks)
@@ -69,7 +69,7 @@ REQUIRED SHOT DIRECTIVE: Shoot a close-up macro photo with direct diffused light
       'Crucial for determining raw grading potential. A shift from 50/50 centering to 70/30 drops a collectible card from a PSA 10 contender ($1,000+) down to raw binder filler ($80).',
     exactShotDirective:
       'A direct 90-degree overhead bird’s-eye photo of the card face laid flat on a matte dark background, with the camera parallel to the card so border widths on top, bottom, left, and right can be measured optically without perspective distortion.',
-    aiStudioPromptTemplate: `[VIALE FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
+    aiStudioPromptTemplate: `[SHUTTERBUCK FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
 STATUS: INSUFFICIENT CONFIDENCE (<80%)
 ASSET CATEGORY: Trading Cards & Collectibles
 MISSING DATAPOINT: Precision Card Centering & Border Ratios
@@ -86,7 +86,7 @@ REQUIRED SHOT DIRECTIVE: Place card on a flat black microfiber surface. Position
       'Crucial because 90% of raw card deductions come from edge chipping and corner whitening on the dark reverse border.',
     exactShotDirective:
       'A macro shot of the bottom-left and top-right corners of the card back against a dark contrasting background, showing white core paper exposure or chipping under clean diffuse light.',
-    aiStudioPromptTemplate: `[VIALE FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
+    aiStudioPromptTemplate: `[SHUTTERBUCK FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
 STATUS: INSUFFICIENT CONFIDENCE (<80%)
 ASSET CATEGORY: Trading Cards & Collectibles
 MISSING DATAPOINT: Reverse Perimeter Edge & Four-Corner Micro-Wear
@@ -103,7 +103,7 @@ REQUIRED SHOT DIRECTIVE: Flip card over on a black mat. Take 2x optical zoom mac
       'Crucial for defeating counterfeit replicas and verifying exact garment release season, fabric composition (e.g. 3L Gore-Tex vs Paclite), and authentic OEM serial font.',
     exactShotDirective:
       'A well-lit macro photo of the white fabric wash tag bundle on the inside lower left hip, showing the RN number, CA number, and model style code in sharp focus.',
-    aiStudioPromptTemplate: `[VIALE FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
+    aiStudioPromptTemplate: `[SHUTTERBUCK FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
 STATUS: INSUFFICIENT CONFIDENCE (<80%)
 ASSET CATEGORY: Technical Outerwear / Apparel
 MISSING DATAPOINT: Interior Hip Care Tag Bundle & Style Number
@@ -144,7 +144,7 @@ export const SupplementaryPromptEngine: React.FC<SupplementaryPromptEngineProps>
   };
 
   const activePromptText = isCustomMode
-    ? `[VIALE FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
+    ? `[SHUTTERBUCK FORENSIC AUDIT: SUPPLEMENTARY EVIDENCE REQUIRED]
 STATUS: INSUFFICIENT CONFIDENCE (<80%)
 MISSING DATAPOINT: ${customMissingDatapoint || 'Specific Hardware / Label Verification'}
 APPRAISAL IMPACT: ${customCriticality || 'Mandatory forensic proof to clear valuation confidence threshold.'}
@@ -169,7 +169,7 @@ REQUIRED SHOT DIRECTIVE: ${customExactShot || 'Macro close-up under direct 5000K
               <span>AI Prompt Template for Missing Photos</span>
             </h1>
             <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-              When VIALE's confidence rating is insufficient (&lt;80%), use this standardized template generator to articulate exactly which forensic element is missing, why it protects gross margins, and the exact physical shot required.
+              When ShutterBuck's confidence rating is insufficient (&lt;80%), use this standardized template generator to articulate exactly which forensic element is missing, why it protects gross margins, and the exact physical shot required.
             </p>
           </div>
 

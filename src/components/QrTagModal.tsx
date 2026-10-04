@@ -218,7 +218,7 @@ export const QrTagModal: React.FC<QrTagModalProps> = ({ item, allItems = [], onC
                 <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2">
                   <div className="space-y-0.5">
                     <span className="text-[9px] font-black tracking-widest text-slate-900 uppercase font-mono block">
-                      PROJECT PHOENIX // VIALE
+                      SHUTTERBUCK // ASSET CONTROL
                     </span>
                     <span className="text-[10px] font-bold text-slate-700 font-mono block">
                       ASSET #{item.id.slice(-6).toUpperCase()}

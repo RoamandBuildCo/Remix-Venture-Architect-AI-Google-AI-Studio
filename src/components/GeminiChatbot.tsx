@@ -59,7 +59,7 @@ const ROLES: RoleConfig[] = [
     icon: Cpu,
     description: 'Standard day-to-day repair procedures, controller pinouts, error codes, parts interchange, and marketplace listing drafts.',
     systemInstruction:
-      'You are the Hands-on Repair Foreman for an LEV shop. You provide step-by-step troubleshooting for Ninebot, Super73, Rad Power, and Sur-Ron vehicles, controller wiring, hydraulic brake bleeds, and turnkey marketplace listings.',
+      'You are the Hands-on Repair Foreman for ShutterBuck, an independent LEV repair and resale shop. You provide step-by-step troubleshooting for Ninebot, Super73, Rad Power, and Sur-Ron vehicles, controller wiring, hydraulic brake bleeds, and turnkey marketplace listings.',
     samplePrompts: [
       'How to clear Ninebot Max Error 14 (throttle hall sensor failure)',
       'Draft an honest Facebook Marketplace listing for a Super73 with 200 miles',
@@ -89,7 +89,7 @@ export const GeminiChatbot: React.FC = () => {
     {
       id: 'welcome-1',
       role: 'model',
-      text: 'LEV Command Center Copilot online. I am equipped with model-tiered reasoning: Gemini 3.1 Pro for complex diagnostics, Gemini 3.5 Flash for general workshop repairs, and Gemini 3.1 Flash-Lite for ultra-fast price checks. How can I assist your operations today?',
+      text: 'ShutterBuck Copilot online. I am equipped with model-tiered reasoning: Gemini 3.1 Pro for complex diagnostics, Gemini 3.5 Flash for general workshop repairs, and Gemini 3.1 Flash-Lite for ultra-fast price checks. How can I assist your operations today?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       modelUsed: 'gemini-3.5-flash',
     },

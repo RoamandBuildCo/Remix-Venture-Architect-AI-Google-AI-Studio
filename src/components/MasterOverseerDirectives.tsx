@@ -132,7 +132,7 @@ STAGE 3: COMMERCIAL FLEX-HUB & 4% RETIREMENT (YEARS 2–15+)
           <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1">
             <span className="font-bold text-sky-400 uppercase font-mono block">The Defense Paper Trail:</span>
             <p className="text-[11px] leading-relaxed">
-              Use the VIALE Inventory Ledger to record the estimated original cost of every scooter, card, and jacket. When sold for less than original cost, export the 1099-K CSV report to substantiate zero capital gain.
+              Use the ShutterBuck Inventory Ledger to record the estimated original cost of every scooter, card, and jacket. When sold for less than original cost, export the 1099-K CSV report to substantiate zero capital gain.
             </p>
           </div>
         </div>
